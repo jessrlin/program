@@ -10,6 +10,9 @@ import os
 import json
 import random
 
+# Allow webcam access
+import cv2
+
 # Categories for manual user selection
 CATEGORIES = ["Tops", "Bottoms", "Shoes"]
 
@@ -22,14 +25,11 @@ class ClothingItem:
         self.category = category
         self.size = size
 
+
 class OutfitGeneratorApp:
-    """
-    Main application class for the Outfit Generator.
-    """
+    """ Main application class for the Outfit Generator."""
     def __init__(self, root):
-        """
-        Initializes the outfit generator app, sets up GUI, and loads stored data.
-        """
+        """ Initializes the outfit generator app, sets up GUI, and loads stored data. """
         # Main window setup
         self.root = root
         self.root.title("Outfit Generator")
@@ -43,22 +43,27 @@ class OutfitGeneratorApp:
         self.load_library()
 
         # GUI Widgets, labels, and buttons
-        tk.Label(root, text="The Outfit Generator", font=("Arial", 14, "bold"), bg="#fce3e5").pack(pady=10)
-        tk.Button(root, text="Upload Image", command=self.upload_image, font=("Arial", 12), bg="#000080", fg="white").pack()
-        tk.Button(root, text="Generate Outfit", command=self.generate_outfit, font=("Arial", 12), bg="#000080", fg="white").pack(pady=10)
-        
-        # Buttons to clear library
-        tk.Button(root, text="Clear Library", command=self.clear_library, font=("Arial", 12), bg="#000080", fg="white").pack(pady=10)
-        tk.Button(root, text="Clear Category", command=self.clear_category, font=("Arial", 12), bg="#000080", fg="white").pack(pady=5)
+        tk.Label(root, text="The Outfit Generator", font=("Times", 24, "bold"), bg="#fce3e5").pack(pady=10)
+
+        # Frame to hold buttons in one row
+        button_frame = tk.Frame(root, bg="#fce3e5")
+        button_frame.pack(pady=10)
+
+        # Buttons in horizontal row
+        tk.Button(button_frame, text="Upload Image", command=self.upload_image, font=("Arial", 12), bg="#0C315C", fg="white").pack(side=tk.LEFT, padx=5)
+        tk.Button(button_frame, text="Capture Image", command=self.capture_image, font=("Arial", 12), bg="#0C315C", fg="white").pack(side=tk.LEFT, padx=5)
+        tk.Button(button_frame, text="Clear Library", command=self.clear_library, font=("Arial", 12), bg="#0C315C", fg="white").pack(side=tk.LEFT, padx=5)
+        tk.Button(button_frame, text="Clear Category", command=self.clear_category, font=("Arial", 12), bg="#0C315C", fg="white").pack(side=tk.LEFT, padx=5)
+
+        # Separate row for Generate Outfit
+        tk.Button(root, text="Generate Outfit", command=self.generate_outfit, font=("Arial", 12), bg="#0C315C", fg="white").pack(pady=15)
 
         # Styling
         self.canvas = tk.Canvas(root, width=400, height=500, bg="white", highlightthickness=2, highlightbackground="#2F4858")
         self.canvas.pack(pady=20)
 
     def upload_image(self):
-        """
-        Allows the user to upload an image and categorize it.
-        """
+        """ Allows the user to upload an image and categorize it. """
         file_path = filedialog.askopenfilename(filetypes=[("Image Files", "*.png;*.jpg;*.jpeg")])
         if file_path:
             category = simpledialog.askstring("Category", "Enter category (Tops, Bottoms, Shoes):").capitalize()
@@ -84,9 +89,7 @@ class OutfitGeneratorApp:
             messagebox.showinfo("Uploaded", f"Image added to {category} (Size AU {size})!")
 
     def generate_outfit(self):
-        """
-        Generates and displays a random outfit from the stored library.
-        """
+        """ Generates and displays a random outfit from the stored library."""
         self.canvas.delete("all")
 
         selected_items = {}
@@ -107,19 +110,15 @@ class OutfitGeneratorApp:
             y_offset += 160
 
     def clear_library(self):
-        """
-        Clears all stored images and resets the library.
-        """
+        """Clears all stored images and resets the library."""
         confirm = messagebox.askyesno("Clear Library", "Are you sure you want to remove all stored images?")
         if confirm:
-            self.library = {cat: [] for cat in CATEGORIES}  # Reset library
+            self.library = {cat: [] for cat in CATEGORIES}  #Reset library
             self.save_library()
             messagebox.showinfo("Library Cleared", "All stored images have been removed!")
 
     def clear_category(self):
-        """
-        Clears only images from a selected category.
-        """
+        """ Clears only images from a selected category. """
         category = simpledialog.askstring("Clear Category", "Enter category to clear (Tops, Bottoms, Shoes):").capitalize()
         if category not in CATEGORIES:
             messagebox.showerror("Error", f"Invalid category. Choose from {', '.join(CATEGORIES)}")
@@ -130,27 +129,76 @@ class OutfitGeneratorApp:
         
         confirm = messagebox.askyesno("Clear Category", f"Are you sure you want to remove all images from {category}?")
         if confirm:
-            self.library[category] = []  # Clear selected category
+            self.library[category] = []  #Clearing selected category
             self.save_library()
             messagebox.showinfo("Category Cleared", f"All images from {category} have been removed!")
 
     def save_library(self):
-        """
-        Saves the library to a JSON file.
-        """
+        """ Saves the library to a JSON file."""
         with open("library.json", "w") as f:
             json.dump(self.library, f)
 
     def load_library(self):
-        """
-        Loads the library from a JSON file if it exists.
-        """
+        """ Loads the library from a JSON file if it exists. """
         if os.path.exists("library.json"):
             with open("library.json", "r") as f:
                 try:
                     self.library = json.load(f)
                 except json.JSONDecodeError:
                     pass
+
+    def capture_image (self):
+        """ Allows user to take their own photo from webcam access. """
+        cap = cv2.VideoCapture(1) #(1)is front facing camera
+        if not cap.isOpened():
+            messagebox.showerror("Error","COuld not open webcam")
+            return
+        
+        messagebox.showinfo("Webcam", "Press 'SPACE' to capture and 'ESC' to exit.") #Instruction pop up
+
+        while True:
+            ret, frame = cap.read()
+            if not ret: 
+                messagebox.showerror("Error", "Failed to capture image")
+                break
+
+            cv2.imshow("Capture image", frame)
+
+            key = cv2.waitKey(1)
+            if key == 32:
+                file_path = "captured_image.jpg"  
+                cv2.imwrite(file_path, frame)
+                cap.release()
+                cv2.destroyAllWindows()
+
+                category = simpledialog.askstring("Category", "Enter category (Tops, Bottoms, Shoes):").capitalize()
+                if category not in CATEGORIES:
+                    messagebox.showerror("Error", f"Invalid category. Choose from {', '.join(CATEGORIES)}")
+                    return
+                
+                #size inputs for catagorization
+                size_range = ("4-18" if category in ["Tops", "Bottoms"] else "5-13")
+                size_prompt = f"Enter AU size ({size_range}):"
+                while True:
+                    try:
+                        size = int(simpledialog.askstring("Size Input", size_prompt))
+                        if (category in ["Tops", "Bottoms"] and 4 <= size <= 18) or (category == "Shoes" and 5 <= size <= 13):
+                            break
+                        else:
+                            messagebox.showerror("Error", f"Invalid size. Please enter a valid AU size ({size_range}).")
+                    except ValueError:
+                        messagebox.showerror("Error", "Invalid input. Please enter a number.")
+
+
+                self.library[category].append(file_path)
+                self.save_library()
+                messagebox.showinfo("Success", f"Image saved to {category}!")
+                break
+
+            elif key == 27:
+                cap.release()
+                cv2.destroyAllWindows()
+                break
 
 if __name__ == "__main__":
     root = tk.Tk()
