@@ -154,7 +154,7 @@ class OutfitGeneratorApp:
             messagebox.showerror("Error","COuld not open webcam")
             return
         
-        messagebox.showinfo("Webcam", "Press 'SPACE' to capture and 'ESC' to exit.") #Instruction pop up
+        messagebox.showinfo("Webcam", "Press 'SPACE' to capture and 'ESC' to exit.") #Instruction popup
 
         while True:
             ret, frame = cap.read()
@@ -165,9 +165,13 @@ class OutfitGeneratorApp:
             cv2.imshow("Capture image", frame)
 
             key = cv2.waitKey(1)
-            if key == 32:
-                file_path = "captured_image.jpg"  
+            if key == 32: #Space bar pressed to capture image
+                i = 1
+                while os.path.exists(F"capture{i}.png"):
+                    i += 1
+                file_path = "capture{i}.png"  
                 cv2.imwrite(file_path, frame)
+
                 cap.release()
                 cv2.destroyAllWindows()
 
@@ -190,12 +194,12 @@ class OutfitGeneratorApp:
                         messagebox.showerror("Error", "Invalid input. Please enter a number.")
 
 
-                self.library[category].append(file_path)
+                self.library[category].append(file_path, size)
                 self.save_library()
                 messagebox.showinfo("Success", f"Image saved to {category}!")
                 break
 
-            elif key == 27:
+            elif key == 27: #ESC key to escape
                 cap.release()
                 cv2.destroyAllWindows()
                 break
